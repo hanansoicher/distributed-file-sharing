@@ -29,19 +29,15 @@ public class DHT {
 
     public void addNode(Node node) {
         // Add the node to the network and update its finger table
-        if (nodes.get(0) != null) {
+        if (!nodes.isEmpty()) {
             node.join(this, nodes.get(0));
         } else {
             node.join(this, null);
         }
-        // Add the node to the nodes array (for simplicity, assuming no removals)
-        for (int i = 0; i < nodes.size(); i++) {
-            if (nodes.get(i) == null) {
-                nodes.set(i, node);
-                break;
-            }
-        }
+        // Add the node to the nodes list
+        nodes.add(node);
     }
+
 
     public void removeNode(Node node) {
         // Remove the node from the Chord ring

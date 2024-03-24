@@ -1,4 +1,5 @@
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class FileMetadata {
     private String fileName;
@@ -6,6 +7,9 @@ public class FileMetadata {
     private  int key; // Unique identifier, could be a hash of the file content
     private  String ownerAddress; // IP address or hostname of the owner node
     private final LocalDateTime creationDate;
+    private String owner;
+    private List<String> sharedWithUsers;
+    private String filePath;
 
     public FileMetadata(String fileName, long fileSize, String ownerAddress, int m) {
         this.fileName = fileName;
@@ -31,6 +35,10 @@ public class FileMetadata {
         this.fileSize = fileSize;
     }
 
+    public String getFilePath() { return filePath; }
+
+    public void setFilePath(String filePath) { this.filePath = filePath; }
+
     public int getKey() {
         return key;
     }
@@ -46,6 +54,14 @@ public class FileMetadata {
     public void setOwnerAddress(String ownerAddress) {
         this.ownerAddress = ownerAddress;
     }
+
+    public String getOwner() { return owner; }
+
+    public void setOwner(String owner) { this.owner = owner; }
+
+    public List<String> getSharedWithUsers() { return sharedWithUsers; }
+
+    public void setSharedWithUsers(List<String> sharedWithUsers) { this.sharedWithUsers = sharedWithUsers; }
 
     @Override
     public String toString() {

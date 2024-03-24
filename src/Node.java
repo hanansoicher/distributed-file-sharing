@@ -3,9 +3,12 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+
 
 public class Node {
     private final int id;
@@ -217,7 +220,7 @@ public class Node {
                 while (true) {
                     try {
                         Socket clientSocket = serverSocket.accept();
-                        new Thread(new FileReceiver(clientSocket, files)).start();
+                        new Thread(new FileReceiver(clientSocket, files, this)).start(); // Pass 'this' as the Node reference
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -261,5 +264,42 @@ public class Node {
                 }
             }
         }
+    }
+
+    public void sendFileData(String fileName, Socket targetSocket) {
+        FileMetadata metadata = files.get(fileName);
+        if (metadata != null) {
+            try (FileInputStream fileInputStream = new FileInputStream(metadata.getFilePath());
+                 BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+                 OutputStream outputStream = targetSocket.getOutputStream()) {
+
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = bufferedInputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void receiveFileData(String fileName, Socket sourceSocket) {
+        try (InputStream inputStream = sourceSocket.getInputStream();
+             FileOutputStream fileOutputStream = new FileOutputStream(fileName);
+             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream)) {
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                bufferedOutputStream.write(buffer, 0, bytesRead);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<String> getFileNames() {
+        return new ArrayList<>(files.keySet());
     }
 }

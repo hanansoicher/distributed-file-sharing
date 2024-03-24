@@ -1,4 +1,5 @@
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Peer {
     private Node node;
@@ -24,8 +25,11 @@ public class Peer {
         this.dht.removeNode(this.node);
     }
 
-    public void storeFile(String fileName, long fileSize) {
+    public void storeFile(String fileName, long fileSize, String filePath) {
         FileMetadata metadata = new FileMetadata(fileName, fileSize, this.node.getIpAddress(), this.dht.getM());
+        metadata.setOwner(this.node.getIpAddress());
+        metadata.setSharedWithUsers(new ArrayList<>());
+        metadata.setFilePath(filePath); // Set the file path
         Node responsibleNode = this.dht.findSuccessor(metadata.getKey());
         responsibleNode.addFile(fileName, metadata);
         System.out.println("File '" + fileName + "' stored at node " + responsibleNode.getId());
@@ -44,6 +48,27 @@ public class Peer {
         }
     }
 
+    public void shareFile(String fileName, String userIpAddress) {
+        FileMetadata metadata = this.node.getFile(fileName);
+        if (metadata != null && metadata.getOwner().equals(this.node.getIpAddress())) {
+            metadata.getSharedWithUsers().add(userIpAddress);
+            System.out.println("File '" + fileName + "' shared with user " + userIpAddress);
+        } else {
+            System.out.println("File not found or you are not the owner of the file.");
+        }
+    }
+
+    public List<String> getFilesSharedWithMe() {
+        List<String> sharedFiles = new ArrayList<>();
+        for (FileMetadata metadata : this.node.getFiles().values()) {
+            if (metadata.getSharedWithUsers().contains(this.node.getIpAddress())) {
+                sharedFiles.add(metadata.getFileName());
+            }
+        }
+        return sharedFiles;
+    }
+
+
     public void deleteFile(String fileName) {
         int fileKey = HashingUtil.hash(fileName, this.dht.getM());
         Node responsibleNode = this.dht.findSuccessor(fileKey);
@@ -51,5 +76,11 @@ public class Peer {
         System.out.println("File '" + fileName + "' deleted from node " + responsibleNode.getId());
     }
 
-    // Additional methods for handling requests, etc.
+    public List<String> getStoredFileNames() {
+        return node.getFileNames();
+    }
+
+    public Node getNode() {
+        return node;
+    }
 }
