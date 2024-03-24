@@ -1,3 +1,4 @@
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,15 +26,26 @@ public class Peer {
         this.dht.removeNode(this.node);
     }
 
-    public void storeFile(String fileName, long fileSize, String filePath) {
-        FileMetadata metadata = new FileMetadata(fileName, fileSize, this.node.getIpAddress(), this.dht.getM());
-        metadata.setOwner(this.node.getIpAddress());
-        metadata.setSharedWithUsers(new ArrayList<>());
-        metadata.setFilePath(filePath); // Set the file path
-        Node responsibleNode = this.dht.findSuccessor(metadata.getKey());
-        responsibleNode.addFile(fileName, metadata);
-        System.out.println("File '" + fileName + "' stored at node " + responsibleNode.getId());
+    public void storeFile(String fileName, String filePath) {
+        File file = new File(filePath);
+        if (file.exists() && file.isFile()) {
+            long fileSize = file.length(); // Automatically determine the file size
+
+            FileMetadata metadata = new FileMetadata(fileName, fileSize, this.node.getIpAddress(), this.dht.getM());
+            metadata.setOwnerAddress(this.node.getIpAddress());
+            if (metadata.getOwnerAddress() == null) {
+                metadata.setOwnerAddress("admin");
+            }
+            metadata.setSharedWithUsers(new ArrayList<>());
+            metadata.setFilePath(filePath); // Set the file path
+            Node responsibleNode = this.dht.findSuccessor(metadata.getKey());
+            responsibleNode.addFile(fileName, metadata);
+            System.out.println("File '" + fileName + "' stored at node " + responsibleNode.getId());
+        } else {
+            System.out.println("File not found or is not a file: " + filePath);
+        }
     }
+
 
     public FileMetadata retrieveFile(String fileName) {
         int fileKey = HashingUtil.hash(fileName, this.dht.getM());
@@ -50,7 +62,7 @@ public class Peer {
 
     public void shareFile(String fileName, String userIpAddress) {
         FileMetadata metadata = this.node.getFile(fileName);
-        if (metadata != null && metadata.getOwner().equals(this.node.getIpAddress())) {
+        if (metadata != null && metadata.getOwnerAddress().equals(this.node.getIpAddress())) {
             metadata.getSharedWithUsers().add(userIpAddress);
             System.out.println("File '" + fileName + "' shared with user " + userIpAddress);
         } else {

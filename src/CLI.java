@@ -68,10 +68,9 @@ public class CLI {
 
         if (file.exists() && file.isFile()) {
             String fileName = file.getName();
-            long fileSize = file.length(); // Automatically detect the file size
 
             // Store the file metadata
-            peer.storeFile(fileName, fileSize, filePath);
+            peer.storeFile(fileName, filePath);
 
             System.out.println("File '" + fileName + "' uploaded successfully.");
         } else {

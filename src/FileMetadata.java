@@ -1,13 +1,13 @@
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class FileMetadata {
     private String fileName;
     private long fileSize;
-    private  int key; // Unique identifier, could be a hash of the file content
-    private  String ownerAddress; // IP address or hostname of the owner node
+    private int key; // Unique identifier, could be a hash of the file content
+    private String ownerAddress; // IP address or hostname of the owner node
     private final LocalDateTime creationDate;
-    private String owner;
     private List<String> sharedWithUsers;
     private String filePath;
 
@@ -17,6 +17,7 @@ public class FileMetadata {
         this.key = HashingUtil.hash(fileName, m);
         this.ownerAddress = ownerAddress;
         this.creationDate = LocalDateTime.now();
+        this.sharedWithUsers = new ArrayList<>();
     }
 
     public String getFileName() {
@@ -54,10 +55,6 @@ public class FileMetadata {
     public void setOwnerAddress(String ownerAddress) {
         this.ownerAddress = ownerAddress;
     }
-
-    public String getOwner() { return owner; }
-
-    public void setOwner(String owner) { this.owner = owner; }
 
     public List<String> getSharedWithUsers() { return sharedWithUsers; }
 
