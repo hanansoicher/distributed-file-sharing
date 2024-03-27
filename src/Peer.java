@@ -5,10 +5,12 @@ import java.util.List;
 public class Peer {
     private Node node;
     private DHT dht;
+    private String userId;
 
-    public Peer(int id, int m) {
+    public Peer(int id, int m, String userId) {
         this.node = new Node(id, m);
         this.dht = new DHT(m);
+        this.userId = userId;
     }
 
     public void joinNetwork(Peer existingPeer) {
@@ -16,7 +18,6 @@ public class Peer {
             this.dht.addNode(this.node);
             this.node.join(this.dht, existingPeer.node);
         } else {
-            // This peer is the first node in the network
             this.dht.addNode(this.node);
             this.node.join(this.dht, null);
         }
@@ -29,28 +30,21 @@ public class Peer {
     public void storeFile(String fileName, String filePath) {
         File file = new File(filePath);
         if (file.exists() && file.isFile()) {
-            long fileSize = file.length(); // Automatically determine the file size
-
-            FileMetadata metadata = new FileMetadata(fileName, fileSize, this.node.getIpAddress(), this.dht.getM());
-            metadata.setOwnerAddress(this.node.getIpAddress());
-            if (metadata.getOwnerAddress() == null) {
-                metadata.setOwnerAddress("admin");
-            }
-            metadata.setSharedWithUsers(new ArrayList<>());
-            metadata.setFilePath(filePath); // Set the file path
+            long fileSize = file.length();
+            FileMetadata metadata = new FileMetadata(fileName, fileSize, this.dht.getM(), this.userId);
+            metadata.setFilePath(filePath);
             Node responsibleNode = this.dht.findSuccessor(metadata.getKey());
-            responsibleNode.addFile(fileName, metadata);
+            responsibleNode.addFile(fileName, metadata, this.userId);
             System.out.println("File '" + fileName + "' stored at node " + responsibleNode.getId());
         } else {
             System.out.println("File not found or is not a file: " + filePath);
         }
     }
 
-
     public FileMetadata retrieveFile(String fileName) {
         int fileKey = HashingUtil.hash(fileName, this.dht.getM());
         Node responsibleNode = this.dht.findSuccessor(fileKey);
-        FileMetadata metadata = responsibleNode.getFile(fileName);
+        FileMetadata metadata = responsibleNode.getFile(fileName, this.userId);
         if (metadata != null) {
             System.out.println("File '" + fileName + "' retrieved from node " + responsibleNode.getId());
             return metadata;
@@ -60,11 +54,11 @@ public class Peer {
         }
     }
 
-    public void shareFile(String fileName, String userIpAddress) {
-        FileMetadata metadata = this.node.getFile(fileName);
-        if (metadata != null && metadata.getOwnerAddress().equals(this.node.getIpAddress())) {
-            metadata.getSharedWithUsers().add(userIpAddress);
-            System.out.println("File '" + fileName + "' shared with user " + userIpAddress);
+    public void shareFile(String fileName, String userToShareWith) {
+        FileMetadata metadata = this.node.getFile(fileName, this.userId);
+        if (metadata != null && metadata.getOwnerUserId().equals(this.userId)) {
+            metadata.shareWithUser(userToShareWith);
+            System.out.println("File '" + fileName + "' shared with user " + userToShareWith);
         } else {
             System.out.println("File not found or you are not the owner of the file.");
         }
@@ -73,23 +67,32 @@ public class Peer {
     public List<String> getFilesSharedWithMe() {
         List<String> sharedFiles = new ArrayList<>();
         for (FileMetadata metadata : this.node.getFiles().values()) {
-            if (metadata.getSharedWithUsers().contains(this.node.getIpAddress())) {
+            if (metadata.getSharedWithUserIds().contains(this.userId)) {
                 sharedFiles.add(metadata.getFileName());
             }
         }
         return sharedFiles;
     }
 
-
     public void deleteFile(String fileName) {
         int fileKey = HashingUtil.hash(fileName, this.dht.getM());
         Node responsibleNode = this.dht.findSuccessor(fileKey);
-        responsibleNode.removeFile(fileName);
+        responsibleNode.removeFile(fileName, this.userId);
         System.out.println("File '" + fileName + "' deleted from node " + responsibleNode.getId());
     }
 
     public List<String> getStoredFileNames() {
         return node.getFileNames();
+    }
+
+    public List<FileMetadata> searchFiles(String searchQuery) {
+        List<FileMetadata> results = new ArrayList<>();
+        for (FileMetadata metadata : node.getFiles().values()) {
+            if (metadata.getFileName().contains(searchQuery) && (metadata.getOwnerUserId().equals(this.userId) || metadata.getSharedWithUserIds().contains(this.userId))) {
+                results.add(metadata);
+            }
+        }
+        return results;
     }
 
     public Node getNode() {

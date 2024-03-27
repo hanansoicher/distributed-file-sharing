@@ -3,7 +3,7 @@ import java.util.List;
 
 public class DHT {
     private List<Node> nodes;
-    private final int m; // Number of bits in the identifier space
+    private final int m; // Bits in identifier space
 
     public DHT(int m) {
         this.nodes = new ArrayList<>();
@@ -15,7 +15,6 @@ public class DHT {
     }
 
     public Node findSuccessor(int keyId) {
-        // Assuming nodes[0] is an arbitrary node in the network
         return nodes.get(0).findSuccessor(keyId);
     }
 
@@ -28,34 +27,30 @@ public class DHT {
     }
 
     public void addNode(Node node) {
-        // Add the node to the network and update its finger table
         if (!nodes.isEmpty()) {
             node.join(this, nodes.get(0));
         } else {
             node.join(this, null);
         }
-        // Add the node to the nodes list
         nodes.add(node);
     }
 
 
     public void removeNode(Node node) {
-        // Remove the node from the Chord ring
+        // Remove node from Chord ring
         node.getPredecessor().setSuccessor(node.getSuccessor());
         node.getSuccessor().setPredecessor(node.getPredecessor());
 
-        // Transfer files from the departing node to its successor
+        // Transfer files from departing node to successor
         node.getSuccessor().getFiles().putAll(node.getFiles());
 
-        // Remove the node from the nodes array
+        // Remove node from the nodes array
         for (int i = 0; i < nodes.size(); i++) {
             if (nodes.get(i) != null && nodes.get(i).getId() == node.getId()) {
                 nodes.set(i, null);
                 break;
             }
         }
-
-        // Update the finger tables of other nodes
         updateFingerTables(node);
     }
 
@@ -70,11 +65,8 @@ public class DHT {
     private boolean isInRange(int key, int start, int end) {
         if (start < end) {
             return key > start && key < end;
-        } else { // The range wraps around the identifier space
+        } else { // Range wraps around  identifier space
             return key > start || key < end;
         }
     }
-
-
-    // Additional methods for maintaining the Chord ring
 }

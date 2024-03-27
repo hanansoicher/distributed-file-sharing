@@ -5,19 +5,19 @@ import java.util.List;
 public class FileMetadata {
     private String fileName;
     private long fileSize;
-    private int key; // Unique identifier, could be a hash of the file content
-    private String ownerAddress; // IP address or hostname of the owner node
+    private int key;
     private final LocalDateTime creationDate;
-    private List<String> sharedWithUsers;
     private String filePath;
+    private String ownerUserId;
+    private List<String> sharedWithUserIds;
 
-    public FileMetadata(String fileName, long fileSize, String ownerAddress, int m) {
+    public FileMetadata(String fileName, long fileSize, int m, String ownerUserId) {
         this.fileName = fileName;
         this.fileSize = fileSize;
         this.key = HashingUtil.hash(fileName, m);
-        this.ownerAddress = ownerAddress;
         this.creationDate = LocalDateTime.now();
-        this.sharedWithUsers = new ArrayList<>();
+        this.ownerUserId = ownerUserId;
+        this.sharedWithUserIds = new ArrayList<>();
     }
 
     public String getFileName() {
@@ -48,17 +48,27 @@ public class FileMetadata {
         this.key = key;
     }
 
-    public String getOwnerAddress() {
-        return ownerAddress;
+    public void setOwnerUserId(String ownerUserId) {
+        this.ownerUserId = ownerUserId;
     }
 
-    public void setOwnerAddress(String ownerAddress) {
-        this.ownerAddress = ownerAddress;
+    public String getOwnerUserId() {
+        return ownerUserId;
     }
 
-    public List<String> getSharedWithUsers() { return sharedWithUsers; }
+    public void setSharedWithUserIds(List<String> sharedWithUserIds) {
+        this.sharedWithUserIds = sharedWithUserIds;
+    }
 
-    public void setSharedWithUsers(List<String> sharedWithUsers) { this.sharedWithUsers = sharedWithUsers; }
+    public List<String> getSharedWithUserIds() {
+        return sharedWithUserIds;
+    }
+
+    public void shareWithUser(String userId) {
+        if (!sharedWithUserIds.contains(userId)) {
+            sharedWithUserIds.add(userId);
+        }
+    }
 
     @Override
     public String toString() {
@@ -66,7 +76,7 @@ public class FileMetadata {
                 "fileName='" + fileName + '\'' +
                 ", fileSize=" + fileSize +
                 ", key=" + key +
-                ", ownerAddress='" + ownerAddress + '\'' +
+                ", ownerUserId='" + ownerUserId + '\'' +
                 ", creationDate=" + creationDate +
                 '}';
     }

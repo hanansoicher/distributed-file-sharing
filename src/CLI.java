@@ -14,7 +14,8 @@ public class CLI {
 
         int m = 4; // Number of bits in the identifier space
         int nodeId = promptForNodeId();
-        peer = new Peer(nodeId, m);
+        String userId = promptForUserId(); // Prompt for user ID
+        peer = new Peer(nodeId, m, userId); // Pass user ID to the Peer constructor
         peer.joinNetwork(null); // Join the network (null indicates first node)
 
         while (true) {
@@ -65,52 +66,39 @@ public class CLI {
         System.out.print("Enter the path of the file to upload: ");
         String filePath = scanner.nextLine();
         File file = new File(filePath);
-
         if (file.exists() && file.isFile()) {
-            String fileName = file.getName();
-
-            // Store the file metadata
-            peer.storeFile(fileName, filePath);
-
-            System.out.println("File '" + fileName + "' uploaded successfully.");
+            peer.storeFile(file.getName(), filePath); // No need to pass user ID, it's handled in the Peer class
+            System.out.println("File uploaded successfully.");
         } else {
-            System.out.println("File not found or is not a file: " + filePath);
+            System.out.println("File not found or is not a file.");
         }
     }
-
-
 
     private static void searchFile() {
         System.out.print("Enter the file name to search: ");
         String fileName = scanner.nextLine();
-
-        FileMetadata metadata = peer.retrieveFile(fileName);
-        if (metadata != null) {
-            System.out.println("File found: " + metadata);
+        List<FileMetadata> results = peer.searchFiles(fileName);
+        if (!results.isEmpty()) {
+            System.out.println("Search results:");
+            for (FileMetadata metadata : results) {
+                System.out.println(metadata);
+            }
         } else {
-            System.out.println("File '" + fileName + "' not found in the network.");
+            System.out.println("No files found matching the search query.");
         }
     }
 
     private static void downloadFile() {
         System.out.print("Enter the file name to download: ");
         String fileName = scanner.nextLine();
-
         FileMetadata metadata = peer.retrieveFile(fileName);
         if (metadata != null) {
-            try (Socket socket = new Socket(metadata.getOwnerAddress(), peer.getNode().getFileServerPort())) {
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                out.println(fileName);  // Send the file name to the server
-                peer.getNode().receiveFileData(fileName, socket);  // Receive the file data
-                System.out.println("File downloaded: " + fileName);
-            } catch (IOException e) {
-                System.out.println("Error downloading file: " + e.getMessage());
-            }
+            peer.getNode().downloadFile(fileName); // Download file directly from the Node
+            System.out.println("File downloaded: " + fileName);
         } else {
             System.out.println("File not found in the network.");
         }
     }
-
 
     private static void listFiles() {
         List<String> fileNames = peer.getStoredFileNames();
@@ -127,10 +115,10 @@ public class CLI {
     private static void shareFile() {
         System.out.print("Enter the file name to share: ");
         String fileName = scanner.nextLine();
-        System.out.print("Enter the IP address of the user to share with: ");
-        String userIpAddress = scanner.nextLine();
-
-        peer.shareFile(fileName, userIpAddress);
+        System.out.print("Enter the user ID of the user to share with: ");
+        String userToShareWith = scanner.nextLine();
+        peer.shareFile(fileName, userToShareWith);
+        System.out.println("File shared successfully.");
     }
 
     private static void listSharedFiles() {
@@ -153,5 +141,10 @@ public class CLI {
     private static int promptForNodeId() {
         System.out.print("Enter your node ID: ");
         return scanner.nextInt();
+    }
+
+    private static String promptForUserId() {
+        System.out.print("Enter your user ID: ");
+        return scanner.nextLine();
     }
 }
