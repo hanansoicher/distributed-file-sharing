@@ -55,7 +55,6 @@ public class DHT {
             }
         }
 
-        // Update the finger tables of other nodes
         updateFingerTables(node);
     }
 
@@ -74,7 +73,4 @@ public class DHT {
             return key > start || key < end;
         }
     }
-
-
-    // Additional methods for maintaining the Chord ring
 }
