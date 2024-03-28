@@ -1,11 +1,21 @@
+package com.dfs.distributedfilesharing;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class DHT {
     private List<Node> nodes;
-    private final int m; // Bits in identifier space
 
-    public DHT(int m) {
+    @Value("${node.m}")
+    private int m;
+
+    public DHT(@Value("${node.m}") int m) {
         this.nodes = new ArrayList<>();
         this.m = m;
     }
@@ -15,10 +25,16 @@ public class DHT {
     }
 
     public Node findSuccessor(int keyId) {
+        if (nodes.isEmpty()) {
+            throw new IllegalStateException("DHT is empty");
+        }
         return nodes.get(0).findSuccessor(keyId);
     }
 
     public Node findPredecessor(int keyId) {
+        if (nodes.isEmpty()) {
+            throw new IllegalStateException("DHT is empty");
+        }
         Node node = nodes.get(0);
         while (!isInRange(keyId, node.getId(), node.getSuccessor().getId())) {
             node = node.closestPrecedingNode(keyId);
@@ -27,45 +43,33 @@ public class DHT {
     }
 
     public void addNode(Node node) {
-        if (!nodes.isEmpty()) {
-            node.join(this, nodes.get(0));
-        } else {
-            node.join(this, null);
+        if (nodes.stream().anyMatch(n -> n.getId() == node.getId())) {
+            throw new IllegalArgumentException("Node with this ID already exists");
         }
+        node.join(this, nodes.isEmpty() ? null : nodes.get(0));
         nodes.add(node);
     }
 
-
     public void removeNode(Node node) {
-        // Remove node from Chord ring
+        if (!nodes.remove(node)) {
+            throw new IllegalArgumentException("Node not found in DHT");
+        }
         node.getPredecessor().setSuccessor(node.getSuccessor());
         node.getSuccessor().setPredecessor(node.getPredecessor());
-
-        // Transfer files from departing node to successor
         node.getSuccessor().getFiles().putAll(node.getFiles());
-
-        // Remove node from the nodes array
-        for (int i = 0; i < nodes.size(); i++) {
-            if (nodes.get(i) != null && nodes.get(i).getId() == node.getId()) {
-                nodes.set(i, null);
-                break;
-            }
-        }
-        updateFingerTables(node);
+        updateFingerTables();
     }
 
-    public void updateFingerTables(Node node) {
+    public void updateFingerTables() {
         for (Node n : nodes) {
-            if (n != null) {
-                n.updateFingerTable(this);
-            }
+            n.updateFingerTable(this);
         }
     }
 
     private boolean isInRange(int key, int start, int end) {
         if (start < end) {
             return key > start && key < end;
-        } else { // Range wraps around  identifier space
+        } else { // Range wraps around identifier space
             return key > start || key < end;
         }
     }
