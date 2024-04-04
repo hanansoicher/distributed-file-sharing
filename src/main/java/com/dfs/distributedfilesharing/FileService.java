@@ -21,8 +21,8 @@ public class FileService {
         this.fileMetadataRepository = fileMetadataRepository;
     }
 
-    public FileMetadata saveFileMetadata(FileMetadata fileMetadata) {
-        return fileMetadataRepository.save(fileMetadata);
+    public void saveFileMetadata(FileMetadata fileMetadata) {
+        fileMetadataRepository.save(fileMetadata);
     }
 
     public FileMetadata getFileMetadata(String filename) {
@@ -36,6 +36,19 @@ public class FileService {
     public List<FileMetadata> searchFiles(String query) {
         return fileMetadataRepository.findAll().stream()
                 .filter(file -> file.getFileName().toLowerCase().contains(query.toLowerCase()))
+                .collect(Collectors.toList());
+    }
+
+    public List<FileMetadata> getFilesForUser(String username) {
+        return fileMetadataRepository.findAll().stream()
+                .filter(file -> file.getOwnerUsername().equals(username) || file.getSharedWithUsernames().contains(username))
+                .collect(Collectors.toList());
+    }
+
+    public List<FileMetadata> searchFilesForUser(String query, String username) {
+        return fileMetadataRepository.findAll().stream()
+                .filter(file -> (file.getFileName().toLowerCase().contains(query.toLowerCase())
+                        && (file.getOwnerUsername().equals(username) || file.getSharedWithUsernames().contains(username))))
                 .collect(Collectors.toList());
     }
 

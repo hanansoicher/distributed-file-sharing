@@ -215,7 +215,7 @@ public class Node {
             for (Map.Entry<String, FileMetadata> entry : predecessor.getFiles().entrySet()) {
                 String fileName = entry.getKey();
                 FileMetadata metadata = entry.getValue();
-                int fileKey = metadata.getKey();
+                int fileKey = metadata.getFileKey();
                 if (isInRange(fileKey, id, predecessor.getId())) {
                     transferredFiles.put(fileName, metadata);
                     predecessor.removeFile(fileName, metadata.getOwnerUsername());

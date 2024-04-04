@@ -17,11 +17,11 @@ public class FileMetadata {
     private Long id;
     private String fileName;
     private long fileSize;
-    public int key;
+    private int file_key;
     private final LocalDateTime creationDate;
     private String filePath;
     private String ownerUsername;
-    private List<String> sharedWithUsernames;
+    private List<String> sharedWithUsernames = new ArrayList<>();
 
     public FileMetadata() {
         this.creationDate = LocalDateTime.now();
@@ -30,10 +30,13 @@ public class FileMetadata {
     public FileMetadata(String fileName, long fileSize, int m, String ownerUsername) {
         this.fileName = fileName;
         this.fileSize = fileSize;
-        this.key = HashingUtil.hash(fileName, m);
+        this.file_key = HashingUtil.hash(fileName, m);
         this.creationDate = LocalDateTime.now();
         this.ownerUsername = ownerUsername;
-        this.sharedWithUsernames = new ArrayList<>();
+    }
+
+    public LocalDateTime getCreationDate() {
+        return creationDate;
     }
 
     public Long getId() {
@@ -64,12 +67,12 @@ public class FileMetadata {
 
     public void setFilePath(String filePath) { this.filePath = filePath; }
 
-    public int getKey() {
-        return key;
+    public int getFileKey() {
+        return file_key;
     }
 
-    public void setKey(int key) {
-        this.key = key;
+    public void setFileKey(int file_key) {
+        this.file_key = file_key;
     }
 
     public void setOwnerUsername(String ownerUsername) {
@@ -88,9 +91,9 @@ public class FileMetadata {
         return sharedWithUsernames;
     }
 
-    public void shareWithUsername(String Username) {
-        if (!sharedWithUsernames.contains(Username)) {
-            sharedWithUsernames.add(Username);
+    public void shareWithUsername(String ownerUsername) {
+        if (!sharedWithUsernames.contains(ownerUsername)) {
+            sharedWithUsernames.add(ownerUsername);
         }
     }
 
@@ -99,7 +102,7 @@ public class FileMetadata {
         return "FileMetadata{" +
                 "fileName='" + fileName + '\'' +
                 ", fileSize=" + fileSize +
-                ", key=" + key +
+                ", file_key=" + file_key +
                 ", ownerUsername='" + ownerUsername + '\'' +
                 ", creationDate=" + creationDate +
                 '}';

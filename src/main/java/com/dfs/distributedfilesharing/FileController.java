@@ -29,13 +29,13 @@ public class FileController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("ownerUsername") String ownerUsername) {
+    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("username") String username) {
         try {
             String uniqueFileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
             Path path = Paths.get(uploadDirectory + uniqueFileName);
             Files.write(path, file.getBytes());
 
-            FileMetadata metadata = new FileMetadata(uniqueFileName, file.getSize(), 4, ownerUsername);
+            FileMetadata metadata = new FileMetadata(uniqueFileName, file.getSize(), 4, username);
             fileService.saveFileMetadata(metadata);
 
             return ResponseEntity.ok("File uploaded successfully: " + uniqueFileName);
